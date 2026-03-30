@@ -1,0 +1,12 @@
+# 忽略大檔
+*.sh
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# model / checkpoint
+VideoPose3D/checkpoint/
+
+# conda installer
+Miniconda3-latest-Linux-x86_64.sh
