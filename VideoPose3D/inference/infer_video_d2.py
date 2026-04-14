@@ -49,6 +49,7 @@ def parse_args():
     parser.add_argument(
         'im_or_folder', help='image or folder of images', default=None
     )
+    parser.add_argument("--device", default="cuda", choices=["cpu", "cuda"])
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -86,6 +87,7 @@ def main(args):
     cfg.merge_from_file(model_zoo.get_config_file(args.cfg))
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(args.cfg)
+    cfg.MODEL.DEVICE = args.device if hasattr(args, 'device') else 'cuda'
     predictor = DefaultPredictor(cfg)
     
 

@@ -4,6 +4,11 @@
 *.pt
 *.pth
 *.ckpt
+*.npz
+*.pyc
+*.obj
+*exp
+*lib
 
 # model / checkpoint
 VideoPose3D/checkpoint/

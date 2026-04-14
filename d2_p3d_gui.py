@@ -26,8 +26,8 @@ from pathlib import Path
 # -------------------------------------------------------
 # PATH CONFIG
 # -------------------------------------------------------
-DEFAULT_DETECTRON2  = os.path.expanduser("~/Documents/Video/detectron2")
-DEFAULT_VIDEOPOSE3D = os.path.expanduser("~/Documents/Video/VideoPose3D")
+DEFAULT_DETECTRON2  = os.path.expanduser("~/Documents/d2_p3d/detectron2")
+DEFAULT_VIDEOPOSE3D = os.path.expanduser("~/Documents/d2_p3d/VideoPose3D")
 DEFAULT_PYTHON      = sys.executable
 
 D2_STEPS = [
@@ -87,7 +87,7 @@ class App(tk.Tk):
 
         # VP inputs
         self.vp_video    = tk.StringVar()
-        self.vp_output   = tk.StringVar(value="output_3d.mp4")
+        self.vp_output   = tk.StringVar(value="output_videos/output_3d.mp4")
 
         self.running = False
         self._proc   = None
@@ -639,13 +639,13 @@ class App(tk.Tk):
         vp = self._vp()
         ckpt_dir = os.path.join(vp, "checkpoint")
         os.makedirs(ckpt_dir, exist_ok=True)
-        model = os.path.join(ckpt_dir, "pretrained_h36m_cpn.bin")
+        model = os.path.join(ckpt_dir, "pretrained_h36m_detectron_coco.bin")
         if os.path.isfile(model):
             self._log("Model already exists, skipping download.", "warn")
             self._set_vp_step(3, "done"); return True
         ok = self._run_cmd([
             "wget", "--show-progress",
-            "https://dl.fbaipublicfiles.com/video-pose-3d/pretrained_h36m_cpn.bin",
+            "https://dl.fbaipublicfiles.com/video-pose-3d/pretrained_h36m_detectron_coco.bin",
             "-P", ckpt_dir],
             step_fn=self._set_vp_step, state_idx=3)
         if ok: self._log("[OK] Pretrained model downloaded", "success")
@@ -662,14 +662,16 @@ class App(tk.Tk):
         self._fix_viz_fps(vp)
 
         subject = Path(video).name
-        output  = self.vp_output.get() or "output_3d.mp4"
+        output  = self.vp_output.get() or "output_videos/output_3d.mp4"
         ok = self._run_cmd([
             self._py(), "run.py",
             "-d", "custom", "-k", "myvideos", "-arc", "3,3,3,3,3",
-            "-c", "checkpoint", "--evaluate", "pretrained_h36m_cpn.bin",
+            "-c", "checkpoint", "--evaluate", "pretrained_h36m_detectron_coco.bin",
             "--render",
             "--viz-subject", subject, "--viz-action", "custom",
-            "--viz-camera", "0", "--viz-output", output,
+            "--viz-camera", "0",
+            "--viz-video", video,
+            "--viz-output", output,
             "--viz-size", "5", "--viz-downsample", "2"],
             cwd=vp, step_fn=self._set_vp_step, state_idx=4)
         if ok: self._log(f"[OK] Output saved: {os.path.join(vp, output)}", "success")
