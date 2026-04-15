@@ -7,11 +7,15 @@
 *.npz
 *.pyc
 *.obj
-*exp
-*lib
+*.exp
+*.lib
+*.mp4
 
 # model / checkpoint
 VideoPose3D/checkpoint/
 
 # conda installer
 Miniconda3-latest-Linux-x86_64.sh
+
+# virtual environment
+venv/

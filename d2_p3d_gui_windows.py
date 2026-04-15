@@ -604,7 +604,7 @@ class App(tk.Tk):
                  "c=torch.version.cuda or 'cpu'; "
                  "cs=c.replace('.','') if c!='cpu' else 'cpu'; "
                  "print('TORCH:'+v); print('CUDA:'+cs)"],
-                capture_output=True, text=True,
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
                 env={**os.environ, "PYTHONIOENCODING": "utf-8"})
             torch_ver = cuda_s = None
             for line in (result.stdout + result.stderr).splitlines():
@@ -764,7 +764,7 @@ class App(tk.Tk):
         try:
             result = subprocess.run(
                 [self._py(), "-c", resolve_script],
-                capture_output=True, text=True, cwd=d2,
+                capture_output=True, text=True, cwd=d2, encoding="utf-8", errors="replace",
                 env={**os.environ, "PYTHONIOENCODING": "utf-8"})
             model_local = None
             for line in (result.stdout + result.stderr).splitlines():
@@ -806,7 +806,7 @@ class App(tk.Tk):
                 "configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml",
                 "--input",  img_path,
                 "--output", out_dir,
-                "--device", device,
+                "--opts", "MODEL.WEIGHTS", model_local, "MODEL.DEVICE", device,
             ], cwd=d2)
             if not ok:
                 self._log(
