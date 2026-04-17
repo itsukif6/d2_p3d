@@ -32,9 +32,9 @@ DEFAULT_PYTHON      = sys.executable
 
 D2_STEPS = [
     "Step 1  Install Detectron2",
-    "Step 2  Demo (detect image)",
-    "Step 3  Batch Image 2D Keypoints",
-    "Step 4  Video 2D Keypoints",
+    # "Step 2  Demo (detect image)",
+    "Step 2  Batch Image 2D Keypoints",
+    "Step 3  Video 2D Keypoints",
 ]
 
 VP_STEPS = [
@@ -537,7 +537,7 @@ class App(tk.Tk):
 
         step_fns = [
             self._d2_step_install,
-            self._d2_step_demo,
+            # self._d2_step_demo,
             self._d2_step_batch_images,
             self._d2_step_infer_video,
         ]
