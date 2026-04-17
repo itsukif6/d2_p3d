@@ -3,12 +3,9 @@
 Detectron2 + VideoPose3D GUI
 Detectron2 Pipeline:
   Step 1  Install Detectron2
-  Step 2  Demo (single image detect)
-  Step 3  Batch Image 2D Keypoint Extract   <-- NEW
-  Step 4  Extract 2D Keypoints (video)
-  Step 5  Convert Format
-  Step 6  Download Pretrained Model
-  Step 7  3D Inference & Output
+  Step 2  Demo (single image detect)   <-- Cancel
+  Step 2  Batch Image 2D Keypoint Extract
+  Step 3  Extract 2D Keypoints (video)
 
 VideoPose3D Pipeline:
   Step 1  Install VideoPose3D (patch files)
@@ -397,41 +394,41 @@ class App(tk.Tk):
         if ok: self._log("[OK] Detectron2 installed", "success")
         return ok
 
-    def _d2_step_demo(self):
-        self._log("\n=== D2 Step 2: Detectron2 Demo ===", "step")
-        d2 = self._d2()
-        demo_img = os.path.join(d2, "demo", "input.jpg")
-        out_dir  = os.path.join(d2, "demo", "output")
-        os.makedirs(out_dir, exist_ok=True)
+    # def _d2_step_demo(self):
+    #     self._log("\n=== D2 Step 2: Detectron2 Demo ===", "step")
+    #     d2 = self._d2()
+    #     demo_img = os.path.join(d2, "demo", "input.jpg")
+    #     out_dir  = os.path.join(d2, "demo", "output")
+    #     os.makedirs(out_dir, exist_ok=True)
 
-        if not os.path.isfile(demo_img):
-            self._log("demo/input.jpg not found, downloading test image...", "warn")
-            ok = self._run_cmd(["wget", "-q", "-O", demo_img,
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/"
-                "Shopping_Centre_with_car_park.jpg/640px-Shopping_Centre_with_car_park.jpg"])
-            if not ok:
-                self._log("Download failed. Put an image at demo/input.jpg manually.", "error")
-                self._set_d2_step(1, "error"); return False
+    #     if not os.path.isfile(demo_img):
+    #         self._log("demo/input.jpg not found, downloading test image...", "warn")
+    #         ok = self._run_cmd(["wget", "-q", "-O", demo_img,
+    #             "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/"
+    #             "Shopping_Centre_with_car_park.jpg/640px-Shopping_Centre_with_car_park.jpg"])
+    #         if not ok:
+    #             self._log("Download failed. Put an image at demo/input.jpg manually.", "error")
+    #             self._set_d2_step(1, "error"); return False
 
-        self._fix_demo_import(d2)
+    #     self._fix_demo_import(d2)
 
-        ok = self._run_cmd([
-            self._py(), "demo/demo.py",
-            "--config-file", "configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",
-            "--input", "demo/input.jpg",
-            "--output", "demo/output/",
-            "--opts", "MODEL.WEIGHTS",
-            "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"],
-            cwd=d2, step_fn=self._set_d2_step, state_idx=1)
-        if ok: self._log(f"[OK] Result saved to {out_dir}", "success")
-        return ok
+    #     ok = self._run_cmd([
+    #         self._py(), "demo/demo.py",
+    #         "--config-file", "configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",
+    #         "--input", "demo/input.jpg",
+    #         "--output", "demo/output/",
+    #         "--opts", "MODEL.WEIGHTS",
+    #         "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"],
+    #         cwd=d2, step_fn=self._set_d2_step, state_idx=1)
+    #     if ok: self._log(f"[OK] Result saved to {out_dir}", "success")
+    #     return ok
 
     def _d2_step_batch_images(self):
-        self._log("\n=== D2 Step 3: Batch Image 2D Keypoints ===", "step")
+        self._log("\n=== D2 Step 2: Batch Image 2D Keypoints ===", "step")
         d2 = self._d2()
         if not self.d2_images:
             self._log("No images selected. Click 'Select Images...' first.", "error")
-            self._set_d2_step(2, "error"); return False
+            self._set_d2_step(1, "error"); return False
 
         self._fix_demo_import(d2)
 
@@ -503,7 +500,7 @@ class App(tk.Tk):
         video = self.vp_video.get()
         if not video or not os.path.isfile(video):
             self._log("Please select an input video first!", "error")
-            self._set_d2_step(3, "error"); return False
+            self._set_d2_step(2, "error"); return False
 
         video_dir = os.path.join(vp, "my_videos")
         os.makedirs(video_dir, exist_ok=True)
@@ -521,7 +518,7 @@ class App(tk.Tk):
             "--output-dir", "npz_output",
             "--image-ext", "mp4",
             "my_videos/"],
-            cwd=vp, step_fn=self._set_d2_step, state_idx=3)
+            cwd=vp, step_fn=self._set_d2_step, state_idx=2)
         if ok: self._log("[OK] 2D keypoints saved to npz_output/", "success")
         return ok
 
@@ -529,10 +526,10 @@ class App(tk.Tk):
         checked = [i for i, v in enumerate(self.d2_step_checks) if v.get()]
         # Step index 2 = batch images, step index 3 = video 2D
         if 2 in checked and not self.d2_images:
-            self._log("[ERROR] Step 3 (Batch Images) is checked but no images selected!", "error")
+            self._log("[ERROR] Step 2 (Batch Images) is checked but no images selected!", "error")
             return
         if 3 in checked and not self.vp_video.get():
-            self._log("[ERROR] Step 4 (Video 2D) requires an input video but none is selected!", "error")
+            self._log("[ERROR] Step 3 (Video 2D) requires an input video but none is selected!", "error")
             return
 
         step_fns = [

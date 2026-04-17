@@ -70,8 +70,8 @@ python d2_p3d_gui_windows.py
 ### 1. 準備環境
 建議先手動建立虛擬環境並安裝基礎套件 (範例為 Conda)：
 ```bash
-conda create -n p3d python=3.10 -y
-conda activate p3d
+conda create -n venv python=3.10 -y
+conda activate venv
 ```
 
 ### 2. 啟動程式與設定
