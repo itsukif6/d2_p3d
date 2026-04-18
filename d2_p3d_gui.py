@@ -3,7 +3,6 @@
 Detectron2 + VideoPose3D GUI
 Detectron2 Pipeline:
   Step 1  Install Detectron2
-  Step 2  Demo (single image detect)   <-- Cancel
   Step 2  Batch Image 2D Keypoint Extract
   Step 3  Extract 2D Keypoints (video)
 
@@ -27,20 +26,40 @@ DEFAULT_DETECTRON2  = os.path.expanduser("~/Documents/d2_p3d/detectron2")
 DEFAULT_VIDEOPOSE3D = os.path.expanduser("~/Documents/d2_p3d/VideoPose3D")
 DEFAULT_PYTHON      = sys.executable
 
-D2_STEPS = [
-    "Step 1  Install Detectron2",
-    # "Step 2  Demo (detect image)",
-    "Step 2  Batch Image 2D Keypoints",
-    "Step 3  Video 2D Keypoints",
+def _make_steps(names):
+    """Build step label list with auto-numbered prefixes based on index."""
+    return [f"Step {i+1}  {name}" for i, name in enumerate(names)]
+
+D2_STEP_NAMES = [
+    "Install Detectron2",
+    "Batch Image 2D Keypoints",
+    "Video 2D Keypoints",
 ]
 
-VP_STEPS = [
-    "Step 1  Install VideoPose3D (patch files)",
-    "Step 2  Extract 2D Keypoints",
-    "Step 3  Convert Format",
-    "Step 4  Download Pretrained Model",
-    "Step 5  3D Inference & Output",
+VP_STEP_NAMES = [
+    "Install VideoPose3D (patch files)",
+    "Extract 2D Keypoints",
+    "Convert Format",
+    "Download Pretrained Model",
+    "3D Inference & Output",
 ]
+
+D2_STEPS = _make_steps(D2_STEP_NAMES)
+VP_STEPS = _make_steps(VP_STEP_NAMES)
+
+def _d2_step_idx(name_fragment):
+    """Return the list index of the D2 step whose name contains name_fragment."""
+    for i, n in enumerate(D2_STEP_NAMES):
+        if name_fragment.lower() in n.lower():
+            return i
+    raise ValueError(f"D2 step not found: {name_fragment}")
+
+def _vp_step_idx(name_fragment):
+    """Return the list index of the VP step whose name contains name_fragment."""
+    for i, n in enumerate(VP_STEP_NAMES):
+        if name_fragment.lower() in n.lower():
+            return i
+    raise ValueError(f"VP step not found: {name_fragment}")
 
 C = {
     "bg":        "#0f0f14",
@@ -206,7 +225,7 @@ class App(tk.Tk):
         # Batch images selector
         batch_row = tk.Frame(parent, bg=parent.cget("bg"))
         batch_row.pack(fill="x", padx=14, pady=4)
-        self._lbl(batch_row, "Batch images (Step 3)", color=C["muted"]).pack(anchor="w")
+        self._lbl(batch_row, f"Batch images (Step {_d2_step_idx('Batch')+1})", color=C["muted"]).pack(anchor="w")
         btn_row = tk.Frame(batch_row, bg=parent.cget("bg"))
         btn_row.pack(fill="x")
         self._btn(btn_row, "Select Images...", self._select_batch_images,
@@ -217,7 +236,7 @@ class App(tk.Tk):
         self.batch_count_lbl.pack(anchor="w", pady=(2,0))
 
         # Video input for Step 4 (Video 2D Keypoints) — shared with VP pipeline
-        self._lbl(parent, "  Video input (Step 4) — also used by VideoPose3D",
+        self._lbl(parent, f"  Video input (Step {_d2_step_idx('Video')+1}) — also used by VideoPose3D",
                   font=MONO_B, color=C["muted"]).pack(anchor="w", padx=14, pady=(8,0))
         self._entry_row(parent, "Input video (.mp4)", self.vp_video, browse_file=True)
 
@@ -394,41 +413,14 @@ class App(tk.Tk):
         if ok: self._log("[OK] Detectron2 installed", "success")
         return ok
 
-    # def _d2_step_demo(self):
-    #     self._log("\n=== D2 Step 2: Detectron2 Demo ===", "step")
-    #     d2 = self._d2()
-    #     demo_img = os.path.join(d2, "demo", "input.jpg")
-    #     out_dir  = os.path.join(d2, "demo", "output")
-    #     os.makedirs(out_dir, exist_ok=True)
-
-    #     if not os.path.isfile(demo_img):
-    #         self._log("demo/input.jpg not found, downloading test image...", "warn")
-    #         ok = self._run_cmd(["wget", "-q", "-O", demo_img,
-    #             "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/"
-    #             "Shopping_Centre_with_car_park.jpg/640px-Shopping_Centre_with_car_park.jpg"])
-    #         if not ok:
-    #             self._log("Download failed. Put an image at demo/input.jpg manually.", "error")
-    #             self._set_d2_step(1, "error"); return False
-
-    #     self._fix_demo_import(d2)
-
-    #     ok = self._run_cmd([
-    #         self._py(), "demo/demo.py",
-    #         "--config-file", "configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml",
-    #         "--input", "demo/input.jpg",
-    #         "--output", "demo/output/",
-    #         "--opts", "MODEL.WEIGHTS",
-    #         "detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl"],
-    #         cwd=d2, step_fn=self._set_d2_step, state_idx=1)
-    #     if ok: self._log(f"[OK] Result saved to {out_dir}", "success")
-    #     return ok
 
     def _d2_step_batch_images(self):
-        self._log("\n=== D2 Step 2: Batch Image 2D Keypoints ===", "step")
+        _idx = _d2_step_idx("Batch")
+        self._log(f"\n=== D2 Step {_idx+1}: Batch Image 2D Keypoints ===", "step")
         d2 = self._d2()
         if not self.d2_images:
             self._log("No images selected. Click 'Select Images...' first.", "error")
-            self._set_d2_step(1, "error"); return False
+            self._set_d2_step(_idx, "error"); return False
 
         self._fix_demo_import(d2)
 
@@ -460,11 +452,11 @@ class App(tk.Tk):
             if not model_local or not os.path.isfile(model_local):
                 self._log("[ERROR] Could not resolve model path via model_zoo.", "error")
                 self._log("  Hint: Run 'Step 1 Install Detectron2' first, then retry.", "warn")
-                self._set_d2_step(2, "error"); return False
+                self._set_d2_step(_idx, "error"); return False
             self._log(f"[OK] Using model: {model_local}", "success")
         except Exception as e:
             self._log(f"[ERROR] model_zoo resolve failed: {e}", "error")
-            self._set_d2_step(2, "error"); return False
+            self._set_d2_step(_idx, "error"); return False
 
         out_dir = os.path.join(d2, "demo", "batch_output")
         os.makedirs(out_dir, exist_ok=True)
@@ -487,7 +479,7 @@ class App(tk.Tk):
                 self._log(f"  [WARN] Failed on {Path(img_path).name}", "warn")
                 all_ok = False
 
-        self._set_d2_step(2, "done" if all_ok else "error")
+        self._set_d2_step(_idx, "done" if all_ok else "error")
         if all_ok:
             self._log(f"[OK] Batch keypoint detection done. Results in {out_dir}", "success")
         else:
@@ -495,12 +487,13 @@ class App(tk.Tk):
         return all_ok
 
     def _d2_step_infer_video(self):
-        self._log("\n=== D2 Step 4: Video 2D Keypoints ===", "step")
+        _idx = _d2_step_idx("Video")
+        self._log(f"\n=== D2 Step {_idx+1}: Video 2D Keypoints ===", "step")
         vp = self._vp()
         video = self.vp_video.get()
         if not video or not os.path.isfile(video):
             self._log("Please select an input video first!", "error")
-            self._set_d2_step(2, "error"); return False
+            self._set_d2_step(_idx, "error"); return False
 
         video_dir = os.path.join(vp, "my_videos")
         os.makedirs(video_dir, exist_ok=True)
@@ -518,23 +511,23 @@ class App(tk.Tk):
             "--output-dir", "npz_output",
             "--image-ext", "mp4",
             "my_videos/"],
-            cwd=vp, step_fn=self._set_d2_step, state_idx=2)
+            cwd=vp, step_fn=self._set_d2_step, state_idx=_idx)
         if ok: self._log("[OK] 2D keypoints saved to npz_output/", "success")
         return ok
 
     def _d2_run_all(self):
         checked = [i for i, v in enumerate(self.d2_step_checks) if v.get()]
-        # Step index 2 = batch images, step index 3 = video 2D
-        if 2 in checked and not self.d2_images:
-            self._log("[ERROR] Step 2 (Batch Images) is checked but no images selected!", "error")
+        batch_idx = _d2_step_idx("Batch")
+        video_idx = _d2_step_idx("Video")
+        if batch_idx in checked and not self.d2_images:
+            self._log(f"[ERROR] Step {batch_idx+1} (Batch Images) is checked but no images selected!", "error")
             return
-        if 3 in checked and not self.vp_video.get():
-            self._log("[ERROR] Step 3 (Video 2D) requires an input video but none is selected!", "error")
+        if video_idx in checked and not self.vp_video.get():
+            self._log(f"[ERROR] Step {video_idx+1} (Video 2D) requires an input video but none is selected!", "error")
             return
 
         step_fns = [
             self._d2_step_install,
-            # self._d2_step_demo,
             self._d2_step_batch_images,
             self._d2_step_infer_video,
         ]
@@ -555,11 +548,12 @@ class App(tk.Tk):
     # VIDEOPOSE3D STEPS
     # ===================================================
     def _vp_step_install(self):
-        self._log("\n=== VP Step 1: Install VideoPose3D + Patch Files ===", "step2")
+        _idx = _vp_step_idx("Install")
+        self._log(f"\n=== VP Step {_idx+1}: Install VideoPose3D + Patch Files ===", "step2")
         vp = self._vp()
         if not os.path.isdir(vp):
             self._log("VideoPose3D directory not found. Please git clone first.", "error")
-            self._set_vp_step(0, "error"); return False
+            self._set_vp_step(_idx, "error"); return False
 
         # Patch 1: infer_video_d2.py - numpy dtype fix
         self._fix_infer_numpy(vp)
@@ -584,7 +578,7 @@ class App(tk.Tk):
             ok = self._run_cmd(
                 [self._py(), "-m", "pip", "install", "matplotlib"])
 
-        self._set_vp_step(0, "done" if ok else "error")
+        self._set_vp_step(_idx, "done" if ok else "error")
         if ok:
             self._log("[OK] VideoPose3D installed and all files patched", "success")
             self._log("  Patched: inference/infer_video_d2.py (numpy dtype)", "info")
@@ -593,12 +587,13 @@ class App(tk.Tk):
         return ok
 
     def _vp_step_infer(self):
-        self._log("\n=== VP Step 2: Extract 2D Keypoints ===", "step2")
+        _idx = _vp_step_idx("Extract")
+        self._log(f"\n=== VP Step {_idx+1}: Extract 2D Keypoints ===", "step2")
         vp = self._vp()
         video = self.vp_video.get()
         if not video or not os.path.isfile(video):
             self._log("Please select an input video first!", "error")
-            self._set_vp_step(1, "error"); return False
+            self._set_vp_step(_idx, "error"); return False
 
         video_dir = os.path.join(vp, "my_videos")
         os.makedirs(video_dir, exist_ok=True)
@@ -616,45 +611,48 @@ class App(tk.Tk):
             "--output-dir", "npz_output",
             "--image-ext", "mp4",
             "my_videos/"],
-            cwd=vp, step_fn=self._set_vp_step, state_idx=1)
+            cwd=vp, step_fn=self._set_vp_step, state_idx=_idx)
         if ok: self._log("[OK] 2D keypoints saved to npz_output/", "success")
         return ok
 
     def _vp_step_prepare(self):
-        self._log("\n=== VP Step 3: Convert Format ===", "step2")
+        _idx = _vp_step_idx("Convert")
+        self._log(f"\n=== VP Step {_idx+1}: Convert Format ===", "step2")
         vp = self._vp()
         ok = self._run_cmd([
             self._py(), "prepare_data_2d_custom.py",
             "-i", "../npz_output", "-o", "myvideos"],
             cwd=os.path.join(vp, "data"),
-            step_fn=self._set_vp_step, state_idx=2)
+            step_fn=self._set_vp_step, state_idx=_idx)
         if ok: self._log("[OK] data/data_2d_custom_myvideos.npz created", "success")
         return ok
 
     def _vp_step_download(self):
-        self._log("\n=== VP Step 4: Download Pretrained Model ===", "step2")
+        _idx = _vp_step_idx("Download")
+        self._log(f"\n=== VP Step {_idx+1}: Download Pretrained Model ===", "step2")
         vp = self._vp()
         ckpt_dir = os.path.join(vp, "checkpoint")
         os.makedirs(ckpt_dir, exist_ok=True)
         model = os.path.join(ckpt_dir, "pretrained_h36m_detectron_coco.bin")
         if os.path.isfile(model):
             self._log("Model already exists, skipping download.", "warn")
-            self._set_vp_step(3, "done"); return True
+            self._set_vp_step(_idx, "done"); return True
         ok = self._run_cmd([
             "wget", "--show-progress",
             "https://dl.fbaipublicfiles.com/video-pose-3d/pretrained_h36m_detectron_coco.bin",
             "-P", ckpt_dir],
-            step_fn=self._set_vp_step, state_idx=3)
+            step_fn=self._set_vp_step, state_idx=_idx)
         if ok: self._log("[OK] Pretrained model downloaded", "success")
         return ok
 
     def _vp_step_run3d(self):
-        self._log("\n=== VP Step 5: 3D Inference & Output ===", "step2")
+        _idx = _vp_step_idx("3D Inference")
+        self._log(f"\n=== VP Step {_idx+1}: 3D Inference & Output ===", "step2")
         vp = self._vp()
         video = self.vp_video.get()
         if not video:
             self._log("Please select an input video first!", "error")
-            self._set_vp_step(4, "error"); return False
+            self._set_vp_step(_idx, "error"); return False
 
         self._fix_viz_fps(vp)
 
@@ -670,15 +668,18 @@ class App(tk.Tk):
             "--viz-video", video,
             "--viz-output", output,
             "--viz-size", "5", "--viz-downsample", "2"],
-            cwd=vp, step_fn=self._set_vp_step, state_idx=4)
+            cwd=vp, step_fn=self._set_vp_step, state_idx=_idx)
         if ok: self._log(f"[OK] Output saved: {os.path.join(vp, output)}", "success")
         return ok
 
     def _vp_run_all(self):
         checked = [i for i, v in enumerate(self.vp_step_checks) if v.get()]
-        # VP step index 1 = Extract 2D Keypoints, step index 4 = 3D Inference
-        if (1 in checked or 4 in checked) and not self.vp_video.get():
-            self._log("[ERROR] VP Step 2/5 requires an input video but none is selected!", "error")
+        infer_idx  = _vp_step_idx("Extract")
+        run3d_idx  = _vp_step_idx("3D Inference")
+        if (infer_idx in checked or run3d_idx in checked) and not self.vp_video.get():
+            self._log(
+                f"[ERROR] VP Step {infer_idx+1}/{run3d_idx+1} requires an input video but none is selected!",
+                "error")
             return
 
         step_fns = [
